@@ -480,22 +480,24 @@ const PublicCourseList = ({
   openCourseDetail: (c: Course) => void 
 }) => {
   // Logic to sort/filter courses.
-  // Requirement: Hide CLOSED courses from public view completely.
   
   const sortedCourses = useMemo(() => {
-      // 1. Strictly filter out CLOSED courses
-      const visibleCourses = courses.filter(c => c.status !== CourseStatus.CLOSED);
+      let filtered = courses;
 
-      // 2. Apply "Open Only" filter if requested
-      let filtered = visibleCourses;
+      // If viewing "Inscrições Abertas", strictly show only OPEN courses.
+      // If viewing "Cursos", show all courses (Open, Closed, In Progress) but sort accordingly.
       if (showOpenCoursesOnly) {
-          filtered = visibleCourses.filter(c => c.status === CourseStatus.OPEN);
+          filtered = courses.filter(c => c.status === CourseStatus.OPEN);
       }
       
-      // 3. Sort: OPEN courses first, then IN_PROGRESS
-      return filtered.sort((a, b) => {
+      // Sort: OPEN courses first, then IN_PROGRESS, then CLOSED
+      return [...filtered].sort((a, b) => {
           if (a.status === CourseStatus.OPEN && b.status !== CourseStatus.OPEN) return -1;
           if (a.status !== CourseStatus.OPEN && b.status === CourseStatus.OPEN) return 1;
+          
+          if (a.status === CourseStatus.IN_PROGRESS && b.status === CourseStatus.CLOSED) return -1;
+          if (a.status === CourseStatus.CLOSED && b.status === CourseStatus.IN_PROGRESS) return 1;
+          
           return 0;
       });
   }, [courses, showOpenCoursesOnly]);
@@ -544,15 +546,21 @@ const PublicCourseList = ({
                    </p>
                    
                    <div className="mt-auto pt-4 border-t border-brand-border flex items-center justify-between gap-4">
-                       <span className={`px-2 py-1 text-[10px] font-bold uppercase tracking-wider border rounded ${
-                            course.status === CourseStatus.OPEN ? 'border-green-500 text-green-400 bg-green-500/10' : 
-                            'border-yellow-500 text-yellow-400 bg-yellow-500/10'
-                        }`}>
-                            {course.status === CourseStatus.OPEN ? '● Inscrições Abertas' : course.status.toUpperCase()}
-                        </span>
+                       {/* Show status tag only if NOT closed, or if actively open/in_progress */}
+                       {course.status !== CourseStatus.CLOSED ? (
+                           <span className={`px-2 py-1 text-[10px] font-bold uppercase tracking-wider border rounded ${
+                                course.status === CourseStatus.OPEN ? 'border-green-500 text-green-400 bg-green-500/10' : 
+                                'border-yellow-500 text-yellow-400 bg-yellow-500/10'
+                            }`}>
+                                {course.status === CourseStatus.OPEN ? '● Inscrições Abertas' : course.status.toUpperCase()}
+                            </span>
+                       ) : (
+                           <div></div> /* Empty placeholder to keep layout if needed, or justify-between handles it */
+                       )}
+                       
                        <button 
                           onClick={() => openCourseDetail(course)}
-                          className="flex items-center gap-1 text-xs font-bold uppercase tracking-widest text-brand-500 hover:text-white transition group/btn"
+                          className="flex items-center gap-1 text-xs font-bold uppercase tracking-widest text-brand-500 hover:text-white transition group/btn ml-auto"
                        >
                           Detalhes <ArrowLeft className="rotate-180 group-hover/btn:translate-x-1 transition-transform" size={14} />
                        </button>
@@ -2011,6 +2019,12 @@ export default function App() {
                     className="flex items-center gap-2 text-xs font-bold uppercase tracking-widest text-slate-400 hover:text-brand-neon transition-colors"
                   >
                      <FileText size={14} /> Currículo
+                  </a>
+                  <a 
+                    href="mailto:cclr@cin.ufpe.br"
+                    className="flex items-center gap-2 text-xs font-bold uppercase tracking-widest text-slate-400 hover:text-brand-neon transition-colors"
+                  >
+                     <Mail size={14} /> Contato
                   </a>
               </div>
           </div>
