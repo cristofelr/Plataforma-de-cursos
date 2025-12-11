@@ -40,7 +40,8 @@ import {
   BarChart,
   Presentation,
   MessageCircle,
-  Phone
+  Phone,
+  Download
 } from 'lucide-react';
 import { 
   User, 
@@ -1446,6 +1447,34 @@ export default function App() {
     const inputClass = "w-full bg-brand-dark border-brand-border border p-2 text-slate-200 focus:border-brand-neon focus:ring-1 focus:ring-brand-neon transition outline-none";
     const labelClass = "block text-xs font-bold text-brand-500 uppercase tracking-wider mb-1";
 
+    const handleExportCSV = () => {
+        const headers = ["Nome", "Email", "Telefone", "Idade", "Sexo", "Escolaridade", "Endereço"];
+        const csvContent = [
+            headers.join(","),
+            ...users.map(u => [
+                `"${u.name}"`,
+                u.email,
+                u.phone,
+                u.age || "",
+                u.gender || "",
+                `"${u.education || ""}"`,
+                `"${u.address || ""}"`
+            ].join(","))
+        ].join("\n");
+    
+        const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+        const link = document.createElement("a");
+        if (link.download !== undefined) {
+            const url = URL.createObjectURL(blob);
+            link.setAttribute("href", url);
+            link.setAttribute("download", "lista_alunos.csv");
+            link.style.visibility = 'hidden';
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        }
+    }
+
     // --- MODAL: CREATE/EDIT COURSE ---
     if (isEditingCourse || (view === 'admin' && adminTab === 'create_mode_fake' as any)) { 
        return (
@@ -1686,7 +1715,7 @@ export default function App() {
                     onClick={() => setAdminTab('users')}
                     className={`pb-2 px-4 font-bold uppercase tracking-widest text-xs transition-colors ${adminTab === 'users' ? 'text-brand-neon border-b-2 border-brand-neon' : 'text-slate-500 hover:text-slate-300'}`}
                 >
-                    Gerenciar Usuários
+                    Gerenciar Alunos
                 </button>
                 <button 
                     onClick={() => setAdminTab('selection')}
@@ -1779,41 +1808,51 @@ export default function App() {
         )}
 
         {adminTab === 'users' && (
-            <div className="overflow-x-auto border border-brand-border">
-                <table className="w-full text-left text-sm text-slate-400">
-                    <thead className="bg-brand-dark text-brand-500 font-bold uppercase tracking-wider text-[10px] font-mono">
-                        <tr>
-                            <th className="p-4">Nome</th>
-                            <th className="p-4">Sexo</th>
-                            <th className="p-4">Idade</th>
-                            <th className="p-4">Escolaridade</th>
-                            <th className="p-4">Email</th>
-                            <th className="p-4">WhatsApp/Tel</th>
-                            <th className="p-4">Endereço</th>
-                            <th className="p-4 text-right">Ações</th>
-                        </tr>
-                    </thead>
-                    <tbody className="divide-y divide-brand-border bg-brand-surface/50">
-                        {users.map(u => (
-                            <tr key={u.id} className="hover:bg-brand-500/10 transition">
-                                <td className="p-4 font-bold text-white">{u.name}</td>
-                                <td className="p-4 font-mono">{u.gender || '-'}</td>
-                                <td className="p-4 font-mono">{u.age || '-'}</td>
-                                <td className="p-4 font-mono text-xs">{u.education || '-'}</td>
-                                <td className="p-4 font-mono">{u.email}</td>
-                                <td className="p-4 font-mono">{u.phone}</td>
-                                <td className="p-4 font-mono text-xs max-w-[150px] truncate">{u.address || '-'}</td>
-                                <td className="p-4 text-right space-x-2">
-                                     <button onClick={() => setIsEditingUser(u)} className="p-1 text-brand-500 hover:text-brand-neon transition" title="Editar Usuário"><Edit size={16} /></button>
-                                     <button onClick={() => handleDeleteUser(u.id)} className="p-1 text-red-800 hover:text-red-500 transition" title="Excluir Usuário"><Trash2 size={16} /></button>
-                                </td>
+            <div>
+                <div className="flex justify-end mb-4">
+                    <button 
+                        onClick={handleExportCSV}
+                        className="bg-brand-surface border border-brand-500/50 text-brand-neon px-4 py-2 flex items-center gap-2 hover:bg-brand-500 hover:text-black transition duration-300 font-bold uppercase tracking-widest text-xs"
+                    >
+                        <Download size={16} /> Exportar CSV
+                    </button>
+                </div>
+                <div className="overflow-x-auto border border-brand-border">
+                    <table className="w-full text-left text-sm text-slate-400">
+                        <thead className="bg-brand-dark text-brand-500 font-bold uppercase tracking-wider text-[10px] font-mono">
+                            <tr>
+                                <th className="p-4">Nome</th>
+                                <th className="p-4">Sexo</th>
+                                <th className="p-4">Idade</th>
+                                <th className="p-4">Escolaridade</th>
+                                <th className="p-4">Email</th>
+                                <th className="p-4">WhatsApp/Tel</th>
+                                <th className="p-4">Endereço</th>
+                                <th className="p-4 text-right">Ações</th>
                             </tr>
-                        ))}
-                        {users.length === 0 && (
-                            <tr><td colSpan={8} className="p-8 text-center text-slate-600">Nenhum usuário cadastrado.</td></tr>
-                        )}
-                    </tbody>
-                </table>
+                        </thead>
+                        <tbody className="divide-y divide-brand-border bg-brand-surface/50">
+                            {users.map(u => (
+                                <tr key={u.id} className="hover:bg-brand-500/10 transition">
+                                    <td className="p-4 font-bold text-white">{u.name}</td>
+                                    <td className="p-4 font-mono">{u.gender || '-'}</td>
+                                    <td className="p-4 font-mono">{u.age || '-'}</td>
+                                    <td className="p-4 font-mono text-xs">{u.education || '-'}</td>
+                                    <td className="p-4 font-mono">{u.email}</td>
+                                    <td className="p-4 font-mono">{u.phone}</td>
+                                    <td className="p-4 font-mono text-xs max-w-[150px] truncate">{u.address || '-'}</td>
+                                    <td className="p-4 text-right space-x-2">
+                                        <button onClick={() => setIsEditingUser(u)} className="p-1 text-brand-500 hover:text-brand-neon transition" title="Editar Usuário"><Edit size={16} /></button>
+                                        <button onClick={() => handleDeleteUser(u.id)} className="p-1 text-red-800 hover:text-red-500 transition" title="Excluir Usuário"><Trash2 size={16} /></button>
+                                    </td>
+                                </tr>
+                            ))}
+                            {users.length === 0 && (
+                                <tr><td colSpan={8} className="p-8 text-center text-slate-600">Nenhum usuário cadastrado.</td></tr>
+                            )}
+                        </tbody>
+                    </table>
+                </div>
             </div>
         )}
 
