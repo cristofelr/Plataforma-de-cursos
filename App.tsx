@@ -41,7 +41,8 @@ import {
   Presentation,
   MessageCircle,
   Phone,
-  Download
+  Download,
+  Save
 } from 'lucide-react';
 import { 
   User, 
@@ -1456,18 +1457,30 @@ export default function App() {
     const labelClass = "block text-xs font-bold text-brand-500 uppercase tracking-wider mb-1";
 
     const handleExportCSV = () => {
-        const headers = ["Nome", "Email", "Telefone", "Idade", "Sexo", "Escolaridade", "Endereço"];
+        // Updated to include enrolled courses
+        const headers = ["ID", "Nome", "Email", "Telefone", "Idade", "Sexo", "Escolaridade", "Endereço", "Cursos Inscritos"];
         const csvContent = [
             headers.join(","),
-            ...users.map(u => [
-                `"${u.name}"`,
-                u.email,
-                u.phone,
-                u.age || "",
-                u.gender || "",
-                `"${u.education || ""}"`,
-                `"${u.address || ""}"`
-            ].join(","))
+            ...users.map(u => {
+                // Find user's enrollments and map to course names
+                const userEnrollments = enrollments.filter(e => e.userId === u.id);
+                const courseNames = userEnrollments.map(e => {
+                    const c = courses.find(course => course.id === e.courseId);
+                    return c ? c.name : 'Unknown';
+                }).join(" | ");
+
+                return [
+                    `"${u.id}"`,
+                    `"${u.name}"`,
+                    u.email,
+                    u.phone,
+                    u.age || "",
+                    u.gender || "",
+                    `"${u.education || ""}"`,
+                    `"${u.address || ""}"`,
+                    `"${courseNames}"` // Add courses column
+                ].join(",")
+            })
         ].join("\n");
     
         const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
@@ -1475,7 +1488,29 @@ export default function App() {
         if (link.download !== undefined) {
             const url = URL.createObjectURL(blob);
             link.setAttribute("href", url);
-            link.setAttribute("download", "lista_alunos.csv");
+            link.setAttribute("download", "lista_alunos_completa.csv");
+            link.style.visibility = 'hidden';
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        }
+    }
+
+    const handleExportDB = () => {
+        // Exports the full state as a JSON file ("script do banco")
+        const dbData = {
+            users,
+            courses,
+            professors,
+            enrollments,
+            timestamp: new Date().toISOString()
+        };
+        const blob = new Blob([JSON.stringify(dbData, null, 2)], { type: 'application/json' });
+        const link = document.createElement("a");
+        if (link.download !== undefined) {
+            const url = URL.createObjectURL(blob);
+            link.setAttribute("href", url);
+            link.setAttribute("download", "cristofe_db_backup.json");
             link.style.visibility = 'hidden';
             document.body.appendChild(link);
             link.click();
@@ -1817,7 +1852,13 @@ export default function App() {
 
         {adminTab === 'users' && (
             <div>
-                <div className="flex justify-end mb-4">
+                <div className="flex justify-end mb-4 gap-2">
+                     <button 
+                        onClick={handleExportDB}
+                        className="bg-brand-dark border border-brand-500/50 text-slate-300 px-4 py-2 flex items-center gap-2 hover:bg-brand-500/20 hover:text-white transition duration-300 font-bold uppercase tracking-widest text-xs"
+                    >
+                        <Database size={16} /> Backup Banco (JSON)
+                    </button>
                     <button 
                         onClick={handleExportCSV}
                         className="bg-brand-surface border border-brand-500/50 text-brand-neon px-4 py-2 flex items-center gap-2 hover:bg-brand-500 hover:text-black transition duration-300 font-bold uppercase tracking-widest text-xs"
