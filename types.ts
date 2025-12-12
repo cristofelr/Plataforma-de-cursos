@@ -1,4 +1,3 @@
-
 export enum EducationLevel {
   PRIMARY = 'Ensino Fundamental',
   SECONDARY = 'Ensino Médio',
@@ -15,7 +14,7 @@ export enum SelectionCriteria {
 
 export enum CourseStatus {
   OPEN = 'Abertas',
-  CLOSED = 'Fechadas',
+  CLOSED = 'Fechada',
   IN_PROGRESS = 'Em Andamento'
 }
 
@@ -33,7 +32,8 @@ export interface User {
   address?: string;
   education?: EducationLevel;
   age?: number;
-  gender?: 'M' | 'F';
+  gender?: 'M' | 'F' | 'Outro';
+  imageUrl?: string;
 }
 
 export interface Professor {
